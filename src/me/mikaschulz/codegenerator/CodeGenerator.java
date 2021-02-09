@@ -13,16 +13,19 @@ import java.util.*;
 public class CodeGenerator {
 
 	/*
-	 * ###TARGET_COLUMNS###					- Spalten der Zieltabelle
-	 * ###SOURCE_COLUMNS###					- Spalten der Quelltabelle
+	 * ###TARGET_COLUMNS###				- Spalten der Zieltabelle
+	 * ###SOURCE_COLUMNS###				- Spalten der Quelltabelle
 	 *
-	 * ###OUTPUT_VALUES###					- Ausgabewerte für Debugging
-	 * ###INSERT_VALUES###					- Werte die im Ziel eingefügt werden
-	 * ###CHECK_VALUES###					- Werte die auf Ungleichheit überprüft werden
+	 * ###OUTPUT_VALUES###				- Ausgabewerte für Debugging
+	 * ###INSERT_VALUES###				- Werte die im Ziel eingefügt werden
+	 * ###CHECK_VALUES###				- Werte die auf Ungleichheit überprüft werden
 	 *
-	 * #HASH#column#						- Verhasht die Spalte "column" mit MD5
-	 * #FCHECKSUM#column1,column2#			- Kreiert eine formatierte Checksumme für die Spalte "column1", "column2" ...
-	 * #UCHECKSUM#column1,column2#			- Kreiert eine unformatierte Checksumme für die Spalte "column1", "column2" ...
+	 * #HASH#column#					- Verhasht die Spalte "column" mit MD5 (Standard: Formatierte Ausgabe)
+	 * #FHASH#column#					- #HASH# mit formatierter Ausgabe
+	 * #UHASH#column#					- #HASH# mit unformatierter Ausgabe
+	 * #CHECKSUM#column1,column2#		- Kreiert eine Checksumme für die Spalte "column1", "column2" ...
+	 * #FCHECKSUM#column1,column2#		- #CHECKSUM#
+	 * #UCHECKSUM#column1,column2#		- Kreiert eine unformatierte Checksumme für die Spalte "column1", "column2" ...
 	 *
 	 */
 
@@ -48,22 +51,30 @@ public class CodeGenerator {
 		scan.useDelimiter(";");
 
 		System.out.println("Gib die Spalten der Quelltabelle an (Kommasepariert, Beenden mit \";\"):");
+		// Trägt die eingegebenen Spalten als SOURCE-Spalten ein
 		addToColumns(scan.next(), SOURCE);
 
+		System.out.println();
 		System.out.println("Gib die Spalten und Datentypen der Zieltabelle an (Kommasepariert, Beenden mit \";\"):");
+		// Trägt die eingegebenen Spalten als TARGET-Spalten ein
 		addToColumns(scan.next(), TARGET);
 
+		// Ausgabe aller Spalten inklusive Tabelle
 		columnMap.forEach((column, table) -> System.out.println(((table == 0) ? "SOURCE" : "TARGET")
 				+ " " + column.getText() + " " + column.getDataType()));
 
+		System.out.println();
 		System.out.println("Gib die Werte an, die eingefügt werden sollen (Kommasepariert, Beenden mit \";\"):");
 
+		// Entfernt alle Tabulatoren, Zeilenumbrüche und Leerzeichen
 		String trimmed = scan.next().replaceAll("\\s","");
-		List<String> columnsList = new LinkedList<>(Arrays.asList(trimmed.split("#")));
+		// Splitte bei "#", um Operations zu finden
+		List<String> partList = new LinkedList<>(Arrays.asList(trimmed.split("#")));
 		System.out.println(trimmed);
-		columnsList.forEach(System.out::println);
+		partList.forEach(System.out::println);
 
-		ListIterator<String> columnIterator = columnsList.listIterator();
+		// Entferne überschüssige Kommata
+		ListIterator<String> columnIterator = partList.listIterator();
 		while (columnIterator.hasNext()) {
 			String column = columnIterator.next();
 			column = trimCommas(column);
@@ -75,14 +86,15 @@ public class CodeGenerator {
 		}
 
 		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
-		columnsList.forEach(System.out::println);
+		partList.forEach(System.out::println);
 		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
 
 		Operation currentOperation = null;
 
-		for (int i = 0; i < columnsList.size(); i++) {
+		// Gehe alle Teile durch, um den in TextEntry, ColumnEntry und Operations zu unterteilen
+		for (int i = 0; i < partList.size(); i++) {
 
-			String input = columnsList.get(i);
+			String input = partList.get(i);
 
 //			List<String> columns = Arrays.asList(input.split(","));
 //
@@ -255,19 +267,22 @@ public class CodeGenerator {
 	}
 
 	/**
-	 * Entfernt alle überschüssigen Tabulatoren, Strings
+	 * Entfernt aus {@code input} alle überschüssigen Tabulatoren, Zeilenumbrüche etc. und teilt die Eingabe anschließend in
+	 * Spalten mit Datentypen auf. Diese werden im Anschluss mit der {@code table} Nummer in die columnList eingefügt.
 	 * @param input Vom User eingegebenen Spalten
 	 * @param table Gibt die Quelle SOURCE oder TARGET an
 	 */
 	public static void addToColumns(String input, int table) {
 
-		if (table != 0 && table != 1) return;
+		// Überprüft ob die Tabellennummer korrekt übergeben wurde
+		if (table != SOURCE && table != TARGET) return;
 
+		// Entfernt alle überschüssigen Tabulatoren, Zeilenumbrüche etc. und spaltet bei ","
 		String[] combos = input.trim().replaceAll("[\\t\\n\\r]+","").split(",");
 		for (String combo : combos) {
-			List<String> comboArray = new ArrayList<>(Arrays.asList(combo.trim().split(" ")));
-			comboArray.removeIf(String::isEmpty);
-			columnMap.put(new ColumnEntry(comboArray.get(0), comboArray.get(1)), table);
+			// Die Kombinationen aus Name und Datentyp werden gespalten und in die Liste eingefügt
+			String[] comboArray = combo.trim().replaceAll(" +", " ").split(" ");
+			columnMap.put(new ColumnEntry(comboArray[0], comboArray[1]), table);
 		}
 	}
 
@@ -284,6 +299,11 @@ public class CodeGenerator {
 		return columnList;
 	}
 
+	/**
+	 * Entfernt die Kommata am Anfang oder Ende von {@code input}
+	 * @param input Aufzählung der Spalten
+	 * @return Aufzählung der Spalten ohne Kommata am Anfang oder Ende
+	 */
 	public static String trimCommas(String input) {
 		StringBuilder builder = new StringBuilder(input);
 		while (builder.length() > 0 && builder.charAt(0) == ',') {

@@ -12,7 +12,6 @@ public class Checksum extends Operation {
 		StringBuilder formatted = new StringBuilder();
 		formatted.append("Checksum (\n");
 
-
 		for (int i = 0; i < getEntryList().size(); i++) {
 //			System.out.println(name);
 			formatted.append("\t");
