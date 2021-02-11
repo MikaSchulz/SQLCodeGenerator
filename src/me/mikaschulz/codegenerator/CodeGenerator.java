@@ -1,6 +1,7 @@
 package me.mikaschulz.codegenerator;
 
 import me.mikaschulz.codegenerator.entry.Entry;
+import me.mikaschulz.codegenerator.entry.OutputValue;
 import me.mikaschulz.codegenerator.entry.entries.ColumnEntry;
 import me.mikaschulz.codegenerator.entry.entries.TextEntry;
 import me.mikaschulz.codegenerator.operation.Operation;
@@ -33,7 +34,7 @@ public class CodeGenerator {
 	private static final int TARGET = 1;
 
 	private static final Map<ColumnEntry, Integer> columnMap = new LinkedHashMap<>();
-	private static final Map<Entry, String> insertValues = new LinkedHashMap<>();
+	private static final List<OutputValue> insertValues = new LinkedList<>();
 
 	/*
 		VERALTET:
@@ -70,8 +71,13 @@ public class CodeGenerator {
 		String trimmed = scan.next().replaceAll("\\s","");
 		// Splitte bei "#", um Operations zu finden
 		List<String> partList = new LinkedList<>(Arrays.asList(trimmed.split("#")));
-		System.out.println(trimmed);
+		System.out.println("========================== START ==========================");
+		System.out.println("trimmed: " + trimmed);
+		System.out.println("=========================== END ===========================");
+		System.out.println("========================== START ==========================");
+		System.out.println("partList unformatted:");
 		partList.forEach(System.out::println);
+		System.out.println("=========================== END ===========================");
 
 		// Entferne überschüssige Kommata
 		ListIterator<String> columnIterator = partList.listIterator();
@@ -85,16 +91,18 @@ public class CodeGenerator {
 			}
 		}
 
-		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+		System.out.println("========================== START ==========================");
+		System.out.println("partList formatted:");
 		partList.forEach(System.out::println);
-		System.out.println("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+		System.out.println("=========================== END ===========================");
 
 		Operation currentOperation = null;
 
 		// Gehe alle Teile durch, um den in TextEntry, ColumnEntry und Operations zu unterteilen
-		for (int i = 0; i < partList.size(); i++) {
-
-			String input = partList.get(i);
+		for (String part : partList) {
+//		for (int i = 0; i < partList.size(); i++) {
+//
+//			String input = partList.get(i);
 
 //			List<String> columns = Arrays.asList(input.split(","));
 //
@@ -133,24 +141,24 @@ public class CodeGenerator {
 //				}
 //			}
 
-			String[] columns = input.split(",");
+			String[] columns = part.split(",");
 			StringBuilder builder = new StringBuilder();
-			builder.append("--------------------------").append("\n");
-			builder.append("columnList no. ").append(i).append("\n");
+			builder.append("========================== START ==========================").append("\n");
+			builder.append("columnList").append("\n");
 			for (String column : columns) {
 				builder.append(column);
 				builder.append("\n");
 			}
-			builder.append("--------------------------");
+			builder.append("=========================== END ===========================");
 			System.out.println(builder.toString());
 
 			if (currentOperation == null) {
-				currentOperation = OperationManager.createOperation(input);
+				currentOperation = OperationManager.createOperation(part);
 				System.out.println("OPERATION GESETZT: " + ((currentOperation == null) ? "NULL" : "NOT NULL"));
 				if (currentOperation != null) continue;
 			}
 			for (String text : columns) {
-				System.out.println("#####################");
+				System.out.println("========================== START ==========================");
 				String[] nameAndPrefix = getNameAndPrefix(text);
 				if (nameAndPrefix == null) {
 					throwMessage(5);
@@ -161,24 +169,27 @@ public class CodeGenerator {
 
 				System.out.println("prefix: " + prefix);
 				System.out.println("name: " + name);
-				Entry entry = getEntry(name, text);
-				System.out.println("#####################");
+				Entry entry = getEntry(name);
+				OutputValue outputValue = new OutputValue(entry, prefix);
+				System.out.println("=========================== END ===========================");
 
 				if (currentOperation != null) {
-					currentOperation.addEntry(entry);
+					currentOperation.addOutputValue(outputValue);
 				} else {
-					insertValues.put(entry, prefix);
+					insertValues.add(outputValue);
 				}
 
 			}
 			if (currentOperation != null) {
-				insertValues.put(currentOperation, "");
+				insertValues.add(new OutputValue(currentOperation, ""));
 				currentOperation = null;
 			}
 
-			for (Map.Entry<Entry, String> values : insertValues.entrySet()) {
-				Entry entry = values.getKey();
-				String prefix = values.getValue();
+			System.out.println("========================== START ==========================");
+
+			for (OutputValue value : insertValues) {
+				Entry entry = value.getEntry();
+				String prefix = value.getPrefix();
 				if (entry instanceof ColumnEntry) {
 					ColumnEntry columnEntry = (ColumnEntry) entry;
 					System.out.println("COLUMN: " + columnEntry.getText() + ", DATATYPE: "
@@ -186,7 +197,7 @@ public class CodeGenerator {
 
 				} else if (entry instanceof TextEntry) {
 					TextEntry textEntry = (TextEntry) entry;
-					System.out.println("TEXTENTRY: " + entry.getText() + ", PREFIX: " + prefix);
+					System.out.println("TEXTENTRY: " + textEntry.getText() + ", PREFIX: " + prefix);
 				} else if (entry instanceof Operation) {
 					Operation operation = (Operation) entry;
 					if (operation instanceof Checksum) {
@@ -199,6 +210,7 @@ public class CodeGenerator {
 				}
 			}
 
+			System.out.println("=========================== END ===========================");
 
 
 
@@ -287,17 +299,17 @@ public class CodeGenerator {
 	}
 
 
-	public static List<ColumnEntry> createColumnList(String input) {
-		List<ColumnEntry> columnList = new ArrayList<>();
-		String[] combos = input.trim().replaceAll("[\\t\\n\\r]+","").split(",");
-		for (String combo : combos) {
-			List<String> comboArray = new ArrayList<>(Arrays.asList(combo.trim().split(" ")));
-			comboArray.removeIf(String::isEmpty);
-			columnList.add(new ColumnEntry(comboArray.get(0), comboArray.get(1)));
-		}
-//		columnList.forEach(column -> System.out.println(column.getColumnName() + " " + column.getDataType()));
-		return columnList;
-	}
+//	public static List<ColumnEntry> createColumnList(String input) {
+//		List<ColumnEntry> columnList = new ArrayList<>();
+//		String[] combos = input.trim().replaceAll("[\\t\\n\\r]+","").split(",");
+//		for (String combo : combos) {
+//			List<String> comboArray = new ArrayList<>(Arrays.asList(combo.trim().split(" ")));
+//			comboArray.removeIf(String::isEmpty);
+//			columnList.add(new ColumnEntry(comboArray.get(0), comboArray.get(1)));
+//		}
+////		columnList.forEach(column -> System.out.println(column.getColumnName() + " " + column.getDataType()));
+//		return columnList;
+//	}
 
 	/**
 	 * Entfernt die Kommata am Anfang oder Ende von {@code input}
@@ -330,13 +342,13 @@ public class CodeGenerator {
 //		return null;
 //	}
 
-	private static Entry getEntry(String column, String text) {
+	private static Entry getEntry(String column) {
 		for (ColumnEntry entry : columnMap.keySet()) {
 			if (entry.getText().equals(column)) {
 				return entry;
 			}
 		}
-		return new TextEntry(text);
+		return new TextEntry(column);
 	}
 
 

@@ -1,5 +1,6 @@
 package me.mikaschulz.codegenerator.operation.operations;
 
+import me.mikaschulz.codegenerator.entry.OutputValue;
 import me.mikaschulz.codegenerator.operation.Operation;
 
 public class Checksum extends Operation {
@@ -12,7 +13,7 @@ public class Checksum extends Operation {
 		StringBuilder formatted = new StringBuilder();
 		formatted.append("Checksum (\n");
 
-		for (int i = 0; i < getEntryList().size(); i++) {
+		for (int i = 0; i < getOutputValues().size(); i++) {
 //			System.out.println(name);
 			formatted.append("\t");
 			if (i == 0) {
@@ -20,7 +21,9 @@ public class Checksum extends Operation {
 			} else {
 				formatted.append(",");
 			}
-			formatted.append(getEntryList().get(i).getText());
+			OutputValue outputValue = getOutputValues().get(i);
+			if (!outputValue.getPrefix().isEmpty()) formatted.append(outputValue.getPrefix()).append(".");
+			formatted.append(outputValue.getEntry().getText());
 			formatted.append("\n");
 		}
 		formatted.append(")");
@@ -30,9 +33,11 @@ public class Checksum extends Operation {
 	protected String toUnformattedString() {
 		StringBuilder unformatted = new StringBuilder();
 		unformatted.append("Checksum ( ");
-		for (int i = 0; i < getEntryList().size(); i++) {
-			unformatted.append(getEntryList().get(i).getText());
-			if (i != getEntryList().size() - 1) {
+		for (int i = 0; i < getOutputValues().size(); i++) {
+			OutputValue outputValue = getOutputValues().get(i);
+			if (!outputValue.getPrefix().isEmpty()) unformatted.append(outputValue.getPrefix()).append(".");
+			unformatted.append(outputValue.getEntry().getText());
+			if (i != getOutputValues().size() - 1) {
 				unformatted.append(", ");
 			}
 		}
