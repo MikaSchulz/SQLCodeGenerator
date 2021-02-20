@@ -1,24 +1,23 @@
- abc varchar(60)
-,def varchar(60)
-,ghi varchar(60)
+ abc varchar(60) 		,def varchar(60)
+			,ghi varchar(60)
+ 			 		 	 ,jkl varchar(60)
 ;
 
- jkl varchar(60)
-,mno varchar(60)
-,pqr varchar(60)
+ mno varchar(60)
+	,pqr varchar(60)
 ,stuv varchar(4)
 ;
 
- abc
+ abc	,def
+,jkl
+			 	,pr.julu
 ,def
-,def
-,pr.def
-,ghi
-,#HASH#abc#
-,TextEntry1
-,#UHASH#vshxret#
-,#FCHECKSUM#abc,def,ghi#
-,TextEntry2
-,TextEntry3
-,#HASH#ghi#
+		,HASH(true,		 neis.batu)
+ 	 ,TextEntry1
+		,HASH(false, def)
+,		Checksum(false		, abc, def, ghi)
+,Checksum(true, HASH(false		, TextEntry2), abc, def, ghi)
+, 	TextEntry2
+,		TextEntry3
+,	HASH(true, ghi)
 ;

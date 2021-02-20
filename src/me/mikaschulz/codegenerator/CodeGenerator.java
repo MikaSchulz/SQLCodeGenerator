@@ -1,25 +1,24 @@
 package me.mikaschulz.codegenerator;
 
+import me.mikaschulz.codegenerator.entry.entries.BoolEntry;
 import me.mikaschulz.codegenerator.entry.Entry;
-import me.mikaschulz.codegenerator.entry.OutputValue;
-import me.mikaschulz.codegenerator.entry.entries.ColumnEntry;
 import me.mikaschulz.codegenerator.entry.entries.TextEntry;
+import me.mikaschulz.codegenerator.entry.entries.ColumnEntry;
 import me.mikaschulz.codegenerator.operation.Operation;
 import me.mikaschulz.codegenerator.operation.OperationManager;
-import me.mikaschulz.codegenerator.operation.operations.Checksum;
-import me.mikaschulz.codegenerator.operation.operations.Hash;
+import me.mikaschulz.codegenerator.operation.operations.EntryList;
 
 import java.util.*;
 
 public class CodeGenerator {
 
 	/*
-	 * ###TARGET_COLUMNS###				- Spalten der Zieltabelle
-	 * ###SOURCE_COLUMNS###				- Spalten der Quelltabelle
+	 * #TARGET_COLUMNS#					- Spalten der Zieltabelle
+	 * #SOURCE_COLUMNS#					- Spalten der Quelltabelle
 	 *
-	 * ###OUTPUT_VALUES###				- Ausgabewerte für Debugging
-	 * ###INSERT_VALUES###				- Werte die im Ziel eingefügt werden
-	 * ###CHECK_VALUES###				- Werte die auf Ungleichheit überprüft werden
+	 * #OUTPUT_VALUES#					- Ausgabewerte für Debugging
+	 * #INSERT_VALUES#					- Werte die im Ziel eingefügt werden
+	 * #CHECK_VALUES#					- Werte die auf Ungleichheit überprüft werden
 	 *
 	 * #HASH#column#					- Verhasht die Spalte "column" mit MD5 (Standard: Formatierte Ausgabe)
 	 * #FHASH#column#					- #HASH# mit formatierter Ausgabe
@@ -30,11 +29,19 @@ public class CodeGenerator {
 	 *
 	 */
 
+	private static final Map<Character, Character> parentheses = new HashMap<>();
+	static {
+		parentheses.put('(', ')');
+		parentheses.put('[', ']');
+		parentheses.put('{', '}');
+	}
+
 	private static final int SOURCE = 0;
 	private static final int TARGET = 1;
 
 	private static final Map<ColumnEntry, Integer> columnMap = new LinkedHashMap<>();
-	private static final List<OutputValue> insertValues = new LinkedList<>();
+//	private static final List<OutputValue> insertValues = new LinkedList<>();
+
 
 	/*
 		VERALTET:
@@ -70,76 +77,57 @@ public class CodeGenerator {
 		// Entfernt alle Tabulatoren, Zeilenumbrüche und Leerzeichen
 		String trimmed = scan.next().replaceAll("\\s","");
 		// Splitte bei "#", um Operations zu finden
-		List<String> partList = new LinkedList<>(Arrays.asList(trimmed.split("#")));
 		System.out.println("========================== START ==========================");
 		System.out.println("trimmed: " + trimmed);
 		System.out.println("=========================== END ===========================");
-		System.out.println("========================== START ==========================");
-		System.out.println("partList unformatted:");
-		partList.forEach(System.out::println);
-		System.out.println("=========================== END ===========================");
 
-		// Entferne überschüssige Kommata
-		ListIterator<String> columnIterator = partList.listIterator();
-		while (columnIterator.hasNext()) {
-			String column = columnIterator.next();
-			column = trimCommas(column);
-			if (column.isEmpty()) {
-				columnIterator.remove();
-			} else {
-				columnIterator.set(column);
-			}
-		}
+//		List<String> test = inputProcessing(trimmed);
+//		test.forEach(System.out::println);
 
-		System.out.println("========================== START ==========================");
-		System.out.println("partList formatted:");
-		partList.forEach(System.out::println);
-		System.out.println("=========================== END ===========================");
+		inputProcess(trimmed);
 
-		Operation currentOperation = null;
+
+//		List<String> partList = new LinkedList<>(Arrays.asList(trimmed.split("###")));
+//		System.out.println("========================== START ==========================");
+//		System.out.println("partList unformatted:");
+//		partList.forEach(System.out::println);
+//		System.out.println("=========================== END ===========================");
+//
+//		// Entferne überschüssige Kommata
+//		ListIterator<String> columnIterator = partList.listIterator();
+//		while (columnIterator.hasNext()) {
+//			String column = columnIterator.next();
+//			column = trimCommas(column);
+//			if (column.isEmpty()) {
+//				columnIterator.remove();
+//			} else {
+//				columnIterator.set(column);
+//			}
+//		}
+//
+//		System.out.println("========================== START ==========================");
+//		System.out.println("partList formatted:");
+//		partList.forEach(System.out::println);
+//		System.out.println("=========================== END ===========================");
+
+
+
+//		Operation currentOperation = null;
 
 		// Gehe alle Teile durch, um den in TextEntry, ColumnEntry und Operations zu unterteilen
-		for (String part : partList) {
-//		for (int i = 0; i < partList.size(); i++) {
-//
-//			String input = partList.get(i);
-
-//			List<String> columns = Arrays.asList(input.split(","));
+//		for (String part : partList) {
 //
 //			if (currentOperation == null) {
-//				currentOperation = OperationManager.createOperation(input);
-//				System.out.println("OPERATION GESETZT: " + ((currentOperation == null) ? "NULL" : "NOT NULL"));
-//				if (currentOperation != null) continue;
-//				for (int x = 0; x < columns.size(); x++) {
-//					System.out.println(x + ": " +  columns.get(x));
-//				}
+//				Class<?>[] operationParameters = OperationManager.getOperationParameters(part);
+//				System.out.println("OPERATION: " + ((operationParameters == null) ? "NULL" : "NOT NULL"));
+//				if (operationParameters == null) continue;
+//				System.out.println("OPERATION: " + operationParameters[0]);
+//
 //			}
 
 
-//			if (currentOperation != null) {
-//				// Operation mit Colums ausstatten
-//				System.out.println("OPERATION VORHANDEN");
-//				for (String text : columns) {
-//					String[] nameAndPrefix = getNameAndPrefix(text);
-//					if (nameAndPrefix == null) {
-//						throwMessage(5);
-//						return;
-//					}
-//					String
-//					currentOperation.addEntry(getEntry(text));
-//				}
-//				System.out.println(currentOperation.isFormatted());
-//				System.out.println(currentOperation.toString());
-//				currentOperation = null;
-//			} else {
-//				currentOperation = OperationManager.createOperation(input);
-//				System.out.println("OPERATION GESETZT: " + ((currentOperation == null) ? "NULL" : "NOT NULL"));
-//				if (currentOperation == null) {
-//					for (int x = 0; x < columns.size(); x++) {
-//						System.out.println(x + ": " +  columns.get(x));
-//					}
-//				}
-//			}
+
+			/*
 
 			String[] columns = part.split(",");
 			StringBuilder builder = new StringBuilder();
@@ -212,9 +200,9 @@ public class CodeGenerator {
 
 			System.out.println("=========================== END ===========================");
 
+			*/
 
-
-		}
+//		}
 		
 		
 		
@@ -257,17 +245,185 @@ public class CodeGenerator {
 
 	}
 
-	private static String[] getNameAndPrefix(String text) {
-		String column = text;
-		String prefix = "";
-		String[] combo = column.split("\\.");
-		if (combo.length > 2) return null;
-		if (combo.length == 2) {
-			prefix = combo[0];
-			column = combo[1];
+	private static void inputProcess(String input) {
+
+		Stack<Operation> operations = new Stack<>();
+		operations.add(new EntryList());
+
+		int i = 0;
+		int lastSplit = 0;
+
+		while (i < input.length()) {
+
+			char posChar = input.charAt(i);
+//			System.out.println(posChar);
+			String current = input.substring(lastSplit, i);
+			boolean closingParentheses = parentheses.containsValue(posChar);
+
+			if (parentheses.containsKey(posChar)) {
+
+//				System.out.println("current: " + current);
+				Operation operation = OperationManager.createOperation(current);
+				if (operation == null) return;
+				operations.push(operation);
+//				System.out.println("className: " + operation.getClass().getSimpleName());
+				lastSplit = i + 1;
+
+//			} else if (parentheses.containsValue(posChar)) {
+//
+//				Entry entry = createEntry(current);
+//				Operation operation = operations.pop();
+//				if (!operation.addParameter(entry)) return;
+//				if (!operations.peek().addParameter(operation)) return;
+//				lastSplit = i + 1;
+
+//			} else if (posChar == '.') {
+//				PrefixEntry prefixEntry = new PrefixEntry();
+//
+//				prefixEntry.setPrefix(current);
+//				entryStack.push(prefixEntry);
+//				lastSplit = i + 1;
+
+			} else if (posChar == ',' || closingParentheses) {
+//				entries.add(input.substring(lastComma, i));
+				Operation operation = operations.peek();
+				if (!current.isBlank()) {
+					Entry entry = createEntry(current);
+					if (!operation.addParameter(entry)) return;
+				}
+				if (closingParentheses) {
+					operations.pop();
+					if (!operations.peek().addParameter(operation)) return;
+				}
+				lastSplit = i + 1;
+
+			}
+
+			i++;
 		}
-		return new String[]{column, prefix};
+
+		EntryList entryList = (EntryList) operations.peek();
+		System.out.println(entryList.getText());
+
+//		EntryList entryList = (EntryList) operations.peek();
+//		for (Entry entry : entryList.getEntries()) {
+//
+//			System.out.println(entry.toString());
+//
+//		}
+
+
 	}
+
+	private static Entry createEntry(String entryString) {
+
+		if (entryString.equalsIgnoreCase("true")
+				|| entryString.equalsIgnoreCase("false")) {
+			BoolEntry boolEntry = new BoolEntry();
+			boolEntry.setBoolValue(Boolean.parseBoolean(entryString));
+			return boolEntry;
+		} else {
+			TextEntry entry = new TextEntry();
+			entry.setText(entryString);
+			return entry;
+		}
+	}
+
+
+//	private static List<String> inputProcessing(String input) {
+//
+//		List<String> entries = new ArrayList<>();
+//
+//		int i = 0;
+//
+//		int lastComma = 0;
+////		System.out.println(input.length() - 1);
+//		while (i < input.length() - 1) {
+//			char posChar = input.charAt(i);
+//			System.out.println(posChar);
+//			if (parentheses.containsValue(posChar)) {
+////				System.out.println(input.substring(i));
+//				String operationString = getOperationString(input.substring(lastComma));
+////				System.out.println(input.substring(lastComma, i) + " - " + operationString);
+//				System.out.println("operationString: " + operationString);
+////				System.out.println(i);
+//				if (operationString == null) return null;
+//				i += operationString.length();
+////				System.out.println(i);
+////				System.out.println(input.charAt(i-1));
+//			}
+////			System.out.println(posChar);
+//			if (posChar == ',') {
+//				entries.add(input.substring(lastComma, i));
+//				lastComma = i + 1;
+//			}
+//			i++;
+//		}
+//
+//
+////		String[] splitted = input.split(",");
+////		for (String split : splitted) {
+////			if (split.contains("(")) {
+////
+////				inputProcessing(split);
+////			} else {
+////				entries.add(split);
+////			}
+////		}
+//
+//		return entries;
+//
+//	}
+//
+//	private static String getOperationString(String input) {
+//
+////		Stack<Character> characterStack = new Stack<>();
+//		StringBuilder operationString = new StringBuilder();
+//
+//		char parenthese = 0;
+//
+//		boolean foundStart = false;
+//
+//		int i = 0;
+//
+//		do {
+//			char posChar = input.charAt(i);
+//			if (parentheses.containsValue(posChar)) {
+//				parenthese = posChar;
+//				foundStart = true;
+//			} else if (parentheses.containsKey(posChar)) {
+//				if (parentheses.get(posChar) != parenthese) return null;
+//				parenthese = 0;
+//			} else if (!foundStart) {
+//				operationString.append(posChar);
+//			}
+//
+//			i++;
+//			if (i > input.length()) return null;
+//
+//		} while (!foundStart || parenthese != 0);
+//
+////		if (operationString.isEmpty()) operationString.append("NullOperation");
+////		String values = input.substring(operationString.length() + 1, i - 1);
+////		operationString.append(" - ");
+////		operationString.append(values);
+//
+//		return operationString.toString();
+//
+//	}
+//
+//
+//	private static String[] getNameAndPrefix(String text) {
+//		String column = text;
+//		String prefix = "";
+//		String[] combo = column.split("\\.");
+//		if (combo.length > 2) return null;
+//		if (combo.length == 2) {
+//			prefix = combo[0];
+//			column = combo[1];
+//		}
+//		return new String[]{column, prefix};
+//	}
 
 	private static void throwMessage(int messageCode) {
 		switch (messageCode) {
@@ -342,14 +498,14 @@ public class CodeGenerator {
 //		return null;
 //	}
 
-	private static Entry getEntry(String column) {
-		for (ColumnEntry entry : columnMap.keySet()) {
-			if (entry.getText().equals(column)) {
-				return entry;
-			}
-		}
-		return new TextEntry(column);
-	}
+//	private static Entry getEntry(String column) {
+//		for (ColumnEntry entry : columnMap.keySet()) {
+//			if (entry.getText().equals(column)) {
+//				return entry;
+//			}
+//		}
+//		return new PrefixEntry(column);
+//	}
 
 
 }

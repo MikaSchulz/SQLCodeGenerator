@@ -16,12 +16,11 @@ public class ColumnEntry extends Entry {
 		return dataType;
 	}
 
-	public String getTextWithPrefix(String prefix) {
-		return prefix + "." + getText();
-	}
-
-	@Override
 	public String getText() {
 		return text;
+	}
+
+	public String toString() {
+		return getClass().getSimpleName() + ": " + getText();
 	}
 }

@@ -2,22 +2,25 @@ package me.mikaschulz.codegenerator.entry.entries;
 
 import me.mikaschulz.codegenerator.entry.Entry;
 
-public class TextEntry extends Entry {
+public class BoolEntry extends Entry {
 
-	private String text;
+	private boolean bool = false;
 
-	public void setText(String text) {
-		this.text = text;
+	public boolean getBoolValue() {
+		return bool;
+	}
+
+	public void setBoolValue(boolean bool) {
+		this.bool = bool;
 	}
 
 	public String getText() {
-		return text;
+		return Boolean.toString(bool);
 	}
 
 	public String toString() {
 		return getClass().getSimpleName() + ": " + getText();
 	}
-
 }
 
 
