@@ -1,6 +1,6 @@
 # SQLCodeGenerator
 
-This project is currently in german only.</br>
+This project is currently still under development, it is currently in german only.</br>
 I will translate this project in the future.
 
 # Contact
